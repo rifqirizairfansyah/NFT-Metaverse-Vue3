@@ -22,11 +22,10 @@ describe("NFTMarket", function() {
     await nft.createToken("https://www.mytokenlocation2.com")
 
     /* put both tokens for sale */
-    await market.createMarketItem(nftContractAddress, 1, auctionPrice, 0, 2, { value: listingPrice })
-    await market.createMarketItem(nftContractAddress, 2, auctionPrice, 1, 5, { value: listingPrice })
-
+    await market.createMarketItem(nftContractAddress, 1, auctionPrice, 0, [[1,3,4], [2,3,2], [1,1,1], [1,2,4]], { value: listingPrice })
+    await market.createMarketItem(nftContractAddress, 2, auctionPrice, 1, [[1,2,1], [1,1,1], [1,2,4] ], { value: listingPrice })
+    // console.log(auctionPrice);
     const [_, buyerAddress] = await ethers.getSigners()
-
     // /* execute sale of token to another user */
     // await market.connect(buyerAddress).createMarketSale(nftContractAddress, 2, { value: auctionPrice})
 
@@ -34,7 +33,11 @@ describe("NFTMarket", function() {
     // items = await market.fetchItemsById(2)
     items = await market.fetchMarketItems()
     lands = await market.getLandLength()
+    getLands = await market.checkLand(1)
 
+    // getLands = await market.checkLand(itemDua)
+
+    console.log(getLands) 
     lands = await Promise.all(lands.map(async i => {
       // console.log(i)
       let item = {
@@ -45,7 +48,7 @@ describe("NFTMarket", function() {
       return item
     }))
 
-    console.log(lands)
+    // console.log(lands)
     items = await Promise.all(items.map(async i => {
       // console.log(i)
       const tokenUri = await nft.tokenURI(i.tokenId)
@@ -60,6 +63,6 @@ describe("NFTMarket", function() {
       }
       return item
     }))
-    console.log('items: ', items)
+    // console.log('items: ', items)
   })
 })

@@ -30,7 +30,6 @@ contract NFTMarket is ReentrancyGuard {
     uint256 price;
     bool sold;
     TypeItems typeItems;
-    uint256[] land;
   }
 
   struct Land {
@@ -42,6 +41,7 @@ contract NFTMarket is ReentrancyGuard {
   Land[] lands;
   mapping (uint256 => Land) private idLandItem;
   mapping (uint256 => MarketItem) private idToMarketItem;
+  mapping (uint256 => Land[]) private marketIdToLands;
 
   event MarketItemCreated (
     uint indexed itemId,
@@ -52,8 +52,7 @@ contract NFTMarket is ReentrancyGuard {
     address payable owner,
     uint256 price,
     bool sold,
-    TypeItems typeItems,
-    uint256[] land
+    TypeItems typeItems
   );
 
   modifier onlyItemOwner(uint256 id) {
@@ -77,18 +76,16 @@ contract NFTMarket is ReentrancyGuard {
     uint256 tokenId,
     uint256 price,
     TypeItems typeItems,
-    uint256 land
+    Land[] memory land
   ) public payable nonReentrant {
     require(price > 0, "Price must be more than 0");
-    require(msg.value == listingPrice, "Price must equal to listing price");
 
     _itemIds.increment();
     uint256 itemId = _itemIds.current();
-    uint256[] memory _land = new uint[](3);
-    _land[0] = land;
 
-    Land memory lando = Land(itemId, 12, land);
-    lands.push(lando);
+    for (uint j = 0; j < land.length; j++) {
+        marketIdToLands[itemId].push(land[j]);
+    }
 
     idToMarketItem[itemId] = MarketItem(
       itemId,
@@ -99,15 +96,18 @@ contract NFTMarket is ReentrancyGuard {
       payable(address(0)),
       price,
       false,
-      typeItems,
-      _land
+      typeItems
     );
 
     IERC721(nftContract).transferFrom(msg.sender, address(this), tokenId);
 
-    emit MarketItemCreated(itemId, nftContract, tokenId, payable(msg.sender), payable(msg.sender), payable(address(0)), price, false, typeItems, _land);
+    emit MarketItemCreated(itemId, nftContract, tokenId, payable(msg.sender), payable(msg.sender), payable(address(0)), price, false, typeItems);
 
   }
+  function checkLand(uint256 itemId) public view returns (Land[] memory) {
+      return marketIdToLands[itemId];
+  }
+
   function getLandLength() public view returns (Land[] memory) {
     uint currentIndex = 0;
 
