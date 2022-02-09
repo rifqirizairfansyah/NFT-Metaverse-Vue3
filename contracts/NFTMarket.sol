@@ -33,6 +33,14 @@ contract NFTMarket is ReentrancyGuard {
     uint256[] land;
   }
 
+  struct Land {
+    uint landId;
+    uint256 x;
+    uint256 y;
+  }
+
+  Land[] lands;
+  mapping (uint256 => Land) private idLandItem;
   mapping (uint256 => MarketItem) private idToMarketItem;
 
   event MarketItemCreated (
@@ -69,13 +77,18 @@ contract NFTMarket is ReentrancyGuard {
     uint256 tokenId,
     uint256 price,
     TypeItems typeItems,
-    uint256[] memory land
+    uint256 land
   ) public payable nonReentrant {
     require(price > 0, "Price must be more than 0");
     require(msg.value == listingPrice, "Price must equal to listing price");
 
     _itemIds.increment();
     uint256 itemId = _itemIds.current();
+    uint256[] memory _land = new uint[](3);
+    _land[0] = land;
+
+    Land memory lando = Land(itemId, 12, land);
+    lands.push(lando);
 
     idToMarketItem[itemId] = MarketItem(
       itemId,
@@ -87,13 +100,28 @@ contract NFTMarket is ReentrancyGuard {
       price,
       false,
       typeItems,
-      land
+      _land
     );
 
     IERC721(nftContract).transferFrom(msg.sender, address(this), tokenId);
 
-    emit MarketItemCreated(itemId, nftContract, tokenId, payable(msg.sender), payable(msg.sender), payable(address(0)), price, false, typeItems, land);
+    emit MarketItemCreated(itemId, nftContract, tokenId, payable(msg.sender), payable(msg.sender), payable(address(0)), price, false, typeItems, _land);
 
+  }
+  function getLandLength() public view returns (Land[] memory) {
+    uint currentIndex = 0;
+
+    Land[] memory items = new Land[] (2);
+    for (uint i = 0; i < lands.length; i++) {
+      if (idToMarketItem[i + 1].owner == address(0)) {
+        uint currentId = idLandItem[i + 1].landId;
+        Land storage currentItem = lands[currentId];
+        items[currentIndex] = currentItem;
+        currentIndex += 1;
+      }
+    }
+
+    return items;
   }
   
   function createMarketSale(
